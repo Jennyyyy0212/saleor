@@ -1358,3 +1358,27 @@ def test_order_query_with_filter_checkout_tokens_empty_list(
     assert len(order_data) == len(orders_from_checkout + [order])
     for o in orders_from_checkout + [order]:
         assert {"node": {"id": graphene.Node.to_global_id("Order", o.pk)}} in order_data
+
+
+def test_order_query_with_filter_voucher_code_string_only(
+    staff_api_client, permission_group_manage_orders, order
+):
+    # given
+    voucher_code = "MY-TEST-VOUCHER"
+    order.voucher_code = voucher_code
+    order.save(update_fields=["voucher_code"])
+
+    permission_group_manage_orders.user_set.add(staff_api_client.user)
+
+    variables = {"filter": {"voucherCode": voucher_code}}
+
+    # when
+    response = staff_api_client.post_graphql(ORDERS_QUERY_WITH_FILTERS, variables)
+
+    # then
+    content = get_graphql_content(response)
+    orders = content["data"]["orders"]["edges"]
+
+    # then
+    assert len(orders) == 1
+    assert orders[0]["node"]["id"] == graphene.Node.to_global_id("Order", order.pk)

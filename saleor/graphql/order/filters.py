@@ -221,6 +221,12 @@ def filter_by_checkout_tokens(qs, _, values):
     return qs.filter(checkout_token__in=values)
 
 
+def filter_voucher_code(qs, _, value):
+    if not value:
+        return qs
+    return qs.filter(voucher_code__iexact=value)
+
+
 class DraftOrderFilter(MetadataFilterBase):
     customer = django_filters.CharFilter(method=filter_customer)
     created = ObjectTypeFilter(input_class=DateRangeInput, method=filter_created_range)
@@ -264,6 +270,7 @@ class OrderFilter(DraftOrderFilter):
         input_class=graphene.String, method=filter_by_order_number
     )
     checkout_ids = GlobalIDMultipleChoiceFilter(method=filter_checkouts)
+    voucher_code = django_filters.CharFilter(method=filter_voucher_code)
 
     class Meta:
         model = Order
